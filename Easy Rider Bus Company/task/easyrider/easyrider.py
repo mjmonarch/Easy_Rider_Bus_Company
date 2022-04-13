@@ -56,20 +56,67 @@
 # check(input())
 
 # ----------------------------------------------STAGE 3----------------------------------------------
+# import json
+# from collections import defaultdict
+#
+#
+# def count_stops(str_JSON):
+#     stop_dict = defaultdict(lambda: 0)
+#     bus_list = json.loads(str_JSON)
+#
+#     for bus_route in bus_list:
+#         stop_dict[bus_route['bus_id']] += 1
+#
+#     print("Line names and number of stops:")
+#     for key, value in stop_dict.items():
+#         print(f"{key}: {value}")
+#
+#
+# count_stops(input())
+
+# ----------------------------------------------STAGE 4----------------------------------------------
 import json
 from collections import defaultdict
 
 
 def count_stops(str_JSON):
-    stop_dict = defaultdict(lambda: 0)
+    start_stops_set, stop_set_uniq, stop_set_non_uniq, finish_stops_set = set(), set(), set(), set()
+    stop_dict = defaultdict(lambda: [0, 0])
     bus_list = json.loads(str_JSON)
 
     for bus_route in bus_list:
-        stop_dict[bus_route['bus_id']] += 1
-
-    print("Line names and number of stops:")
-    for key, value in stop_dict.items():
-        print(f"{key}: {value}")
+        # checking start stops
+        if bus_route['stop_type'] == 'S':
+            # check if start stop for this route already exists
+            if stop_dict[bus_route['bus_id']][0]:
+                print(f"There are multiple start stops for the line: {bus_route['bus_id']}.")
+                break
+            else:
+                start_stops_set.add(bus_route['stop_name'])
+                stop_dict[bus_route['bus_id']][0] = 1
+        # checking final stops
+        if bus_route['stop_type'] == 'F':
+            # check if finish stop for this route already exists
+            if stop_dict[bus_route['bus_id']][1]:
+                print(f"There are multiple finish stops for the line: {bus_route['bus_id']}.")
+                break
+            else:
+                finish_stops_set.add(bus_route['stop_name'])
+                stop_dict[bus_route['bus_id']][1] = 1
+        # checking transfer stops
+        if bus_route['stop_name'] not in stop_set_uniq:
+            stop_set_uniq.add(bus_route['stop_name'])
+        else:
+            stop_set_non_uniq.add(bus_route['stop_name'])
+    else:
+        for key, value in stop_dict.items():
+            if value[0] != 1 or value[1] != 1:
+                print(f"There is no start or end stop for the line: {key}.")
+                break
+        else:
+            print(f"Start stops: {len(start_stops_set)} {sorted(start_stops_set)}")
+            print(f"Transfer stops: {len(stop_set_non_uniq)} {sorted(stop_set_non_uniq)}")
+            print(f"Finish stops: {len(finish_stops_set)} {sorted(finish_stops_set)}")
 
 
 count_stops(input())
