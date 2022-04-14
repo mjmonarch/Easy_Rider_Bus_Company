@@ -122,37 +122,85 @@
 # count_stops(input())
 
 # ----------------------------------------------STAGE 5----------------------------------------------
+# import json
+# import re
+# from collections import defaultdict
+# from datetime import time
+#
+#
+# def check_time(str_JSON):
+#     time_dict = defaultdict(lambda: time(hour=0, minute=0))
+#     err_dict = {}
+#     bus_list = json.loads(str_JSON)
+#
+#     for bus_route in bus_list:
+#         c_hour, c_min = re.findall(r'\d{2}', bus_route['a_time'])
+#         c_time = time(int(c_hour), int(c_min))
+#
+#         if bus_route['bus_id'] in err_dict.keys():
+#             continue
+#         else:
+#             if c_time < time_dict[bus_route['bus_id']]:
+#                 err_dict[bus_route['bus_id']] = bus_route['stop_name']
+#             else:
+#                 time_dict[bus_route['bus_id']] = c_time
+#
+#     print("Arrival time test:")
+#     if len(err_dict) == 0:
+#         print("OK")
+#     else:
+#         for key, value in err_dict.items():
+#             print(f"bus_id line {key}: wrong time on station {value}")
+#
+#
+# check_time(input())
+
+# ----------------------------------------------STAGE 6----------------------------------------------
 import json
-import re
 from collections import defaultdict
-from datetime import time
 
 
-def check_time(str_JSON):
-    time_dict = defaultdict(lambda: time(hour=0, minute=0))
-    err_dict = {}
+def count_stops(str_JSON):
+    wrong_stops_list = []
+    route_list = []
+    non_id_stop_set, stop_set_uniq, stop_set_non_uniq = set(), set(), set()
     bus_list = json.loads(str_JSON)
 
+    final = False
+    last_id = 0
     for bus_route in bus_list:
-        c_hour, c_min = re.findall(r'\d{2}', bus_route['a_time'])
-        c_time = time(int(c_hour), int(c_min))
-
-        if bus_route['bus_id'] in err_dict.keys():
-            continue
+        if bus_route['bus_id'] not in route_list:
+            route_list.append(bus_route['bus_id'])
+            final = False
+            if bus_route['stop_type'] != 'S':
+                if bus_route['stop_name'] not in wrong_stops_list:
+                    wrong_stops_list.append(bus_route['stop_name'])
         else:
-            if c_time < time_dict[bus_route['bus_id']]:
-                err_dict[bus_route['bus_id']] = bus_route['stop_name']
-            else:
-                time_dict[bus_route['bus_id']] = c_time
+            if bus_route['stop_type'] == 'S':
+                if bus_route['stop_name'] not in wrong_stops_list:
+                    wrong_stops_list.append(bus_route['stop_name'])
+            if bus_route['stop_type'] == 'F':
+                if final:
+                    wrong_stops_list.append(bus_route['stop_name'])
+                else:
+                    final = True
+        if bus_route['stop_name'] not in stop_set_uniq:
+            stop_set_uniq.add(bus_route['stop_name'])
+        else:
+            stop_set_non_uniq.add(bus_route['stop_name'])
+        if bus_route['stop_type'] == 'O':
+            non_id_stop_set.add(bus_route['stop_name'])
 
-    print("Arrival time test:")
-    if len(err_dict) == 0:
+        last_id = bus_route['bus_id']
+
+    for item in stop_set_non_uniq.intersection(non_id_stop_set):
+        wrong_stops_list.append(item)
+
+    print("On demand stops test:")
+    if len(wrong_stops_list) == 0:
         print("OK")
     else:
-        for key, value in err_dict.items():
-            print(f"bus_id line {key}: wrong time on station {value}")
+        print(sorted(wrong_stops_list))
 
 
-check_time(input())
-
-
+count_stops(input())
